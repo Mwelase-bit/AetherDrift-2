@@ -30,7 +30,12 @@
                 
                 // Scene setup
                 const scene = new THREE.Scene();
+                scene.fog = new THREE.Fog(0x87CEEB, 10, 50); // Add atmospheric fog
+                
                 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
                 const cam = new THREE.PerspectiveCamera(
                     camera?.fov || 75, 
                     canvasRef.current.clientWidth / canvasRef.current.clientHeight, 
@@ -43,8 +48,40 @@
                 }
                 
                 renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
-                renderer.setClearColor(0x87CEEB, 0);
+                renderer.setClearColor(0x87CEEB, 1);
                 canvasRef.current.appendChild(renderer.domElement);
+                
+                // Add particle system for dust/debris effects
+                const particleGeometry = new THREE.BufferGeometry();
+                const particleCount = 100;
+                const positions = new Float32Array(particleCount * 3);
+                const velocities = new Float32Array(particleCount * 3);
+                
+                for (let i = 0; i < particleCount * 3; i += 3) {
+                    positions[i] = (Math.random() - 0.5) * 10;
+                    positions[i + 1] = Math.random() * 5;
+                    positions[i + 2] = (Math.random() - 0.5) * 10;
+                    
+                    velocities[i] = (Math.random() - 0.5) * 0.02;
+                    velocities[i + 1] = -Math.random() * 0.01;
+                    velocities[i + 2] = (Math.random() - 0.5) * 0.02;
+                }
+                
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                particleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+                
+                const particleMaterial = new THREE.PointsMaterial({
+                    color: 0xDDDDDD,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const particles = new THREE.Points(particleGeometry, particleMaterial);
+                particles.visible = false;
+                scene.add(particles);
+                
+                scene.userData.particles = particles;
                 
                 sceneRef.current = scene;
                 rendererRef.current = renderer;
@@ -56,14 +93,48 @@
                 
                 const animate = () => {
                     requestAnimationFrame(animate);
-                    if (children && React.isValidElement(children)) {
-                        // Update scene with React children props
+                    
+                    // Animate particles
+                    if (particles.visible) {
+                        const positions = particleGeometry.attributes.position.array;
+                        const velocities = particleGeometry.attributes.velocity.array;
+                        
+                        for (let i = 0; i < positions.length; i += 3) {
+                            positions[i] += velocities[i];
+                            positions[i + 1] += velocities[i + 1];
+                            positions[i + 2] += velocities[i + 2];
+                            
+                            // Reset particles that fall below ground
+                            if (positions[i + 1] < 0) {
+                                positions[i] = (Math.random() - 0.5) * 10;
+                                positions[i + 1] = Math.random() * 5 + 2;
+                                positions[i + 2] = (Math.random() - 0.5) * 10;
+                            }
+                        }
+                        
+                        particleGeometry.attributes.position.needsUpdate = true;
                     }
+                    
                     renderer.render(scene, cam);
                 };
                 animate();
                 
+                // Handle window resize
+                const handleResize = () => {
+                    if (canvasRef.current) {
+                        const width = canvasRef.current.clientWidth;
+                        const height = canvasRef.current.clientHeight;
+                        
+                        cam.aspect = width / height;
+                        cam.updateProjectionMatrix();
+                        renderer.setSize(width, height);
+                    }
+                };
+                
+                window.addEventListener('resize', handleResize);
+                
                 return () => {
+                    window.removeEventListener('resize', handleResize);
                     if (canvasRef.current && renderer.domElement) {
                         canvasRef.current.removeChild(renderer.domElement);
                     }

@@ -93,37 +93,19 @@ const TimerPanel = ({ timer, onStartSession, gameState }) => {
                     
                     <div className="timer-controls">
                         <button
-                            className="btn btn-warning"
-                            onClick={timer.pause}
-                            disabled={timer.isPaused}
-                        >
-                            <i data-feather="pause"></i>
-                            Pause
-                        </button>
-                        
-                        <button
-                            className="btn btn-success"
-                            onClick={timer.resume}
-                            disabled={!timer.isPaused}
-                        >
-                            <i data-feather="play"></i>
-                            Resume
-                        </button>
-                        
-                        <button
-                            className="btn btn-danger"
+                            className="btn btn-danger btn-lg"
                             onClick={() => {
                                 timer.stop();
                                 gameState.resetBuilding();
                             }}
                         >
                             <i data-feather="square"></i>
-                            Stop
+                            Stop Session
                         </button>
                     </div>
                     
                     <div className="focus-tips">
-                        <p><strong>Stay Focused!</strong> Touching your phone will demolish the house.</p>
+                        <p><strong>Stay Focused!</strong> Any interruption will cause the house to crumble!</p>
                         <p>Current House: {gameState.currentHouse}</p>
                     </div>
                 </div>
