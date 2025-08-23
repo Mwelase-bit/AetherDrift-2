@@ -1,13 +1,5 @@
 const TimerPanel = ({ timer, onStartSession, gameState }) => {
-    const [selectedDuration, setSelectedDuration] = useState(25 * 60); // Default 25 minutes
-    
-    const durations = [
-        { label: '10 min', value: 10 * 60 },
-        { label: '25 min', value: 25 * 60 },
-        { label: '30 min', value: 30 * 60 },
-        { label: '45 min', value: 45 * 60 },
-        { label: '1 hour', value: 60 * 60 }
-    ];
+    const [selectedMinutes, setSelectedMinutes] = useState(25); // Default 25 minutes
     
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -27,17 +19,22 @@ const TimerPanel = ({ timer, onStartSession, gameState }) => {
             {!timer.isActive ? (
                 <div className="timer-setup">
                     <div className="duration-selector">
-                        <h4>Choose Focus Duration:</h4>
-                        <div className="duration-buttons">
-                            {durations.map((duration) => (
-                                <button
-                                    key={duration.value}
-                                    className={`duration-btn ${selectedDuration === duration.value ? 'active' : ''}`}
-                                    onClick={() => setSelectedDuration(duration.value)}
-                                >
-                                    {duration.label}
-                                </button>
-                            ))}
+                        <h4>Set Focus Duration:</h4>
+                        <div className="minutes-input-container">
+                            <label htmlFor="minutes-input">Minutes:</label>
+                            <input
+                                id="minutes-input"
+                                type="range"
+                                min="5"
+                                max="120"
+                                value={selectedMinutes}
+                                onChange={(e) => setSelectedMinutes(parseInt(e.target.value))}
+                                className="minutes-slider"
+                            />
+                            <div className="minutes-display">
+                                <span className="minutes-value">{selectedMinutes}</span>
+                                <span className="minutes-label">minutes</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -65,7 +62,7 @@ const TimerPanel = ({ timer, onStartSession, gameState }) => {
                     
                     <button
                         className="start-btn btn btn-primary btn-lg"
-                        onClick={() => onStartSession(selectedDuration)}
+                        onClick={() => onStartSession(selectedMinutes * 60)}
                     >
                         <i data-feather="play"></i>
                         Start Focus Session

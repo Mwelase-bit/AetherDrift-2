@@ -56,9 +56,13 @@ const GameScene = ({ gameState, timer, interruptionDetected }) => {
         // Add construction site elements
         addConstructionSite(scene);
         
-        // Add builder character and house
+        // Add builder character
         createBuilder(scene, gameState);
-        createHouse(scene, gameState, timer);
+        
+        // Initialize empty house group
+        const houseGroup = new THREE.Group();
+        scene.add(houseGroup);
+        scene.userData.houseGroup = houseGroup;
     };
     
     const addConstructionSite = (scene) => {
@@ -314,6 +318,134 @@ const GameScene = ({ gameState, timer, interruptionDetected }) => {
         scene.userData.houseIsCollapsing = false;
     };
     
+    // Separate function to update house progress
+    const updateHouseProgress = (houseGroup, houseData, gameState, timer) => {
+        // Progress calculation for active building
+        let buildProgress = 0;
+        if (timer && timer.isActive && timer.duration > 0) {
+            buildProgress = (timer.duration - timer.timeLeft) / timer.duration;
+        } else if (gameState.buildStage >= 4) {
+            buildProgress = 1;
+        }
+        
+        // Foundation (always shows if stage >= 1)
+        if (gameState.buildStage >= 1) {
+            const foundationGeometry = new THREE.BoxGeometry(houseData.foundation.width, 0.2, houseData.foundation.depth);
+            const foundationMaterial = new THREE.MeshLambertMaterial({ color: 0x606060 });
+            const foundation = new THREE.Mesh(foundationGeometry, foundationMaterial);
+            foundation.position.set(0, 0.1, 0);
+            houseGroup.add(foundation);
+        }
+        
+        // Animated brick laying for walls (stage 2)
+        if (gameState.buildStage >= 2) {
+            const wallHeight = houseData.walls?.height || 2;
+            const wallWidth = houseData.walls?.width || 3;
+            const wallDepth = houseData.walls?.depth || 3;
+            
+            // Create individual bricks for realistic building animation
+            const brickGeometry = new THREE.BoxGeometry(0.3, 0.15, 0.2);
+            const brickMaterial = new THREE.MeshLambertMaterial({ color: houseData.colors?.walls || 0xCD853F });
+            
+            // Calculate how many bricks to show based on progress
+            const totalBricks = Math.floor(wallHeight / 0.15) * Math.floor(wallWidth / 0.3) * 4; // 4 walls
+            const bricksToShow = Math.floor(totalBricks * buildProgress);
+            
+            let brickCount = 0;
+            
+            // Build walls brick by brick
+            for (let wall = 0; wall < 4 && brickCount < bricksToShow; wall++) {
+                const rows = Math.floor(wallHeight / 0.15);
+                const bricksPerRow = Math.floor(wallWidth / 0.3);
+                
+                for (let row = 0; row < rows && brickCount < bricksToShow; row++) {
+                    for (let brick = 0; brick < bricksPerRow && brickCount < bricksToShow; brick++) {
+                        const brickMesh = new THREE.Mesh(brickGeometry, brickMaterial);
+                        const y = 0.2 + row * 0.15 + 0.075;
+                        
+                        let x, z;
+                        if (wall === 0) { // Front wall
+                            x = -wallWidth/2 + brick * 0.3 + 0.15;
+                            z = wallDepth/2;
+                        } else if (wall === 1) { // Right wall
+                            x = wallWidth/2;
+                            z = wallDepth/2 - brick * 0.3 - 0.15;
+                        } else if (wall === 2) { // Back wall
+                            x = wallWidth/2 - brick * 0.3 - 0.15;
+                            z = -wallDepth/2;
+                        } else { // Left wall
+                            x = -wallWidth/2;
+                            z = -wallDepth/2 + brick * 0.3 + 0.15;
+                        }
+                        
+                        brickMesh.position.set(x, y, z);
+                        
+                        // Add slight variation to make it look more realistic
+                        brickMesh.rotation.y += (Math.random() - 0.5) * 0.05;
+                        
+                        houseGroup.add(brickMesh);
+                        brickCount++;
+                    }
+                }
+            }
+            
+            // Add door and windows only if walls are mostly complete
+            if (buildProgress > 0.7 || gameState.buildStage > 2) {
+                // Door
+                const doorGeometry = new THREE.BoxGeometry(0.8, 1.5, 0.1);
+                const doorMaterial = new THREE.MeshLambertMaterial({ color: houseData.colors?.door || 0x8B4513 });
+                const door = new THREE.Mesh(doorGeometry, doorMaterial);
+                door.position.set(0, 0.95, wallDepth / 2 + 0.05);
+                houseGroup.add(door);
+                
+                // Windows
+                const windowGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.1);
+                const windowMaterial = new THREE.MeshLambertMaterial({ color: 0x87CEEB });
+                
+                const leftWindow = new THREE.Mesh(windowGeometry, windowMaterial);
+                leftWindow.position.set(-1, 1.2, wallDepth / 2 + 0.05);
+                houseGroup.add(leftWindow);
+                
+                const rightWindow = new THREE.Mesh(windowGeometry, windowMaterial);
+                rightWindow.position.set(1, 1.2, wallDepth / 2 + 0.05);
+                houseGroup.add(rightWindow);
+            }
+        }
+        
+        // Roof (stage 3)
+        if (gameState.buildStage >= 3) {
+            const roofGeometry = new THREE.ConeGeometry((houseData.roof?.width || 3)/2, 1.2, 4);
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: houseData.colors?.roof || 0xB22222 });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.set(0, (houseData.walls?.height || 2) + 0.8, 0);
+            roof.rotation.y = Math.PI / 4;
+            houseGroup.add(roof);
+        }
+        
+        // Finishing touches (stage 4)
+        if (gameState.buildStage >= 4) {
+            // Chimney
+            const chimneyGeometry = new THREE.BoxGeometry(0.4, 1.2, 0.4);
+            const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0xB22222 });
+            const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+            chimney.position.set(1.5, (houseData.walls?.height || 2) + 1.1, -0.5);
+            houseGroup.add(chimney);
+            
+            // Garden elements
+            const flowerGeometry = new THREE.SphereGeometry(0.1);
+            const flowerMaterial = new THREE.MeshLambertMaterial({ color: 0xFF6B9D });
+            for (let i = 0; i < 5; i++) {
+                const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
+                flower.position.set(
+                    (Math.random() - 0.5) * 6,
+                    0.1,
+                    (Math.random() - 0.5) * 6
+                );
+                houseGroup.add(flower);
+            }
+        }
+    };
+    
     // House destruction animation with particles
     const destroyHouse = (scene) => {
         const houseGroup = scene.userData.houseGroup;
@@ -424,10 +556,16 @@ const GameScene = ({ gameState, timer, interruptionDetected }) => {
             }
         }
         
-        // Rebuild house with updated progress
-        if (houseGroup && timer.isActive) {
-            scene.remove(houseGroup);
-            createHouse(scene, gameState, timer);
+        // Always update house based on current state
+        if (houseGroup) {
+            // Clear existing house
+            houseGroup.clear();
+            
+            // Rebuild house with current state
+            if (HOUSE_TYPES && gameState.currentHouse) {
+                const houseData = HOUSE_TYPES[gameState.currentHouse] || HOUSE_TYPES.cottage;
+                updateHouseProgress(houseGroup, houseData, gameState, timer);
+            }
         }
     }, [timer.isActive, timer.isPaused, timer.timeLeft, gameState.buildStage]);
     
