@@ -76,24 +76,30 @@ const RewardPanel = ({ rewards }) => {
             <div className="streak-bonuses">
                 <h3>Streak Bonuses</h3>
                 <div className="bonus-track">
-                    {[3, 7, 14, 30, 100].map((milestone) => (
+                    {[
+                        { days: 3, reward: "30 coins" },
+                        { days: 7, reward: "70 coins" },
+                        { days: 14, reward: "140 coins" },
+                        { days: 20, reward: "1GB Data" },
+                        { days: 50, reward: "5GB Data" }
+                    ].map((milestone) => (
                         <div 
-                            key={milestone}
-                            className={`bonus-milestone ${rewards.streak >= milestone ? 'achieved' : 'pending'}`}
+                            key={milestone.days}
+                            className={`bonus-milestone ${rewards.streak >= milestone.days ? 'achieved' : 'pending'}`}
                         >
-                            <div className="milestone-number">{milestone}</div>
+                            <div className="milestone-number">{milestone.days}</div>
                             <div className="milestone-reward">
                                 <i data-feather="gift"></i>
-                                +{milestone * 10} coins
+                                {milestone.reward}
                             </div>
                         </div>
                     ))}
                 </div>
                 <p className="next-milestone">
-                    {rewards.streak < 100 && (
+                    {rewards.streak < 50 && (
                         <>
                             Next milestone in {
-                                [3, 7, 14, 30, 100].find(m => m > rewards.streak) - rewards.streak
+                                [3, 7, 14, 20, 50].find(m => m > rewards.streak) - rewards.streak
                             } days!
                         </>
                     )}

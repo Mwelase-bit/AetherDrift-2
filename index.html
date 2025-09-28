@@ -18,7 +18,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         
-        // Three.js utility components for React
+                // Three.js utility components for React
         const ThreeCanvas = ({ children, camera, onMount }) => {
             const canvasRef = useRef();
             const sceneRef = useRef();
@@ -28,16 +28,23 @@
             useEffect(() => {
                 if (!canvasRef.current) return;
                 
+                console.log('ThreeCanvas: Setting up 3D scene...');
+                
                 // Scene setup
                 const scene = new THREE.Scene();
-                scene.fog = new THREE.Fog(0x87CEEB, 10, 50); // Add atmospheric fog
+                scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
                 
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                const renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: false,
+                    powerPreference: "high-performance"
+                });
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 
                 const cam = new THREE.PerspectiveCamera(
-                    camera?.fov || 75, 
+                    camera?.fov || 50, 
                     canvasRef.current.clientWidth / canvasRef.current.clientHeight, 
                     0.1, 
                     1000
@@ -47,77 +54,22 @@
                     cam.position.set(...camera.position);
                 }
                 
+                // Ensure camera looks at the house
+                cam.lookAt(0, 2, 0);
+                
                 renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
                 renderer.setClearColor(0x87CEEB, 1);
                 canvasRef.current.appendChild(renderer.domElement);
-                
-                // Add particle system for dust/debris effects
-                const particleGeometry = new THREE.BufferGeometry();
-                const particleCount = 100;
-                const positions = new Float32Array(particleCount * 3);
-                const velocities = new Float32Array(particleCount * 3);
-                
-                for (let i = 0; i < particleCount * 3; i += 3) {
-                    positions[i] = (Math.random() - 0.5) * 10;
-                    positions[i + 1] = Math.random() * 5;
-                    positions[i + 2] = (Math.random() - 0.5) * 10;
-                    
-                    velocities[i] = (Math.random() - 0.5) * 0.02;
-                    velocities[i + 1] = -Math.random() * 0.01;
-                    velocities[i + 2] = (Math.random() - 0.5) * 0.02;
-                }
-                
-                particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                particleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-                
-                const particleMaterial = new THREE.PointsMaterial({
-                    color: 0xDDDDDD,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 0.6
-                });
-                
-                const particles = new THREE.Points(particleGeometry, particleMaterial);
-                particles.visible = false;
-                scene.add(particles);
-                
-                scene.userData.particles = particles;
                 
                 sceneRef.current = scene;
                 rendererRef.current = renderer;
                 cameraRef.current = cam;
                 
+                console.log('ThreeCanvas: Scene created, calling onMount...');
+                
                 if (onMount) {
                     onMount({ scene, camera: cam, renderer });
                 }
-                
-                const animate = () => {
-                    requestAnimationFrame(animate);
-                    
-                    // Animate particles
-                    if (particles.visible) {
-                        const positions = particleGeometry.attributes.position.array;
-                        const velocities = particleGeometry.attributes.velocity.array;
-                        
-                        for (let i = 0; i < positions.length; i += 3) {
-                            positions[i] += velocities[i];
-                            positions[i + 1] += velocities[i + 1];
-                            positions[i + 2] += velocities[i + 2];
-                            
-                            // Reset particles that fall below ground
-                            if (positions[i + 1] < 0) {
-                                positions[i] = (Math.random() - 0.5) * 10;
-                                positions[i + 1] = Math.random() * 5 + 2;
-                                positions[i + 2] = (Math.random() - 0.5) * 10;
-                            }
-                        }
-                        
-                        particleGeometry.attributes.position.needsUpdate = true;
-                    }
-                    
-                    renderer.render(scene, cam);
-                };
-                animate();
                 
                 // Handle window resize
                 const handleResize = () => {
@@ -160,6 +112,7 @@
     <script type="text/babel" src="src/components/UI/TimerPanel.jsx"></script>
     <script type="text/babel" src="src/components/UI/RewardPanel.jsx"></script>
     <script type="text/babel" src="src/components/UI/ProfilePanel.jsx"></script>
+    <script type="text/babel" src="src/components/UI/CommunityPanel.jsx"></script>
     <script type="text/babel" src="src/components/UI/ShopPanel.jsx"></script>
     <script type="text/babel" src="src/components/UI/AchievementPanel.jsx"></script>
     <script type="text/babel" src="src/components/GameScene.jsx"></script>

@@ -39,23 +39,11 @@ const TimerPanel = ({ timer, onStartSession, gameState }) => {
                     </div>
                     
                     <div className="house-preview">
-                        <h4>Building Progress:</h4>
+                        <h4>Castle Estate:</h4>
                         <div className="build-stages">
-                            <div className={`stage ${gameState.buildStage >= 1 ? 'completed' : 'pending'}`}>
-                                <i data-feather="square"></i>
-                                Foundation
-                            </div>
-                            <div className={`stage ${gameState.buildStage >= 2 ? 'completed' : 'pending'}`}>
+                            <div className="stage completed">
                                 <i data-feather="home"></i>
-                                Walls
-                            </div>
-                            <div className={`stage ${gameState.buildStage >= 3 ? 'completed' : 'pending'}`}>
-                                <i data-feather="triangle"></i>
-                                Roof
-                            </div>
-                            <div className={`stage ${gameState.buildStage >= 4 ? 'completed' : 'pending'}`}>
-                                <i data-feather="star"></i>
-                                Finishing
+                                Castle Complete
                             </div>
                         </div>
                     </div>
@@ -83,7 +71,7 @@ const TimerPanel = ({ timer, onStartSession, gameState }) => {
                         </div>
                         
                         <div className="session-info">
-                            <span>Building Stage: {gameState.buildStage}/4</span>
+                            <span>Castle Estate: Complete</span>
                             <span>Total Time: {formatTime(timer.duration)}</span>
                         </div>
                     </div>

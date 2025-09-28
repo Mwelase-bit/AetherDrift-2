@@ -1,7 +1,7 @@
 const useGameState = () => {
     const [gameState, setGameState] = useState({
         buildStage: 0,
-        currentHouse: 'cottage',
+        currentHouse: 'castle',
         isBuilding: false,
         isCollapsing: false,
         completedHouses: [],
@@ -21,7 +21,7 @@ const useGameState = () => {
             outfits: ['default'],
             hats: ['hardhat'],
             tools: ['hammer'],
-            houses: ['cottage']
+            houses: ['skyscraper']
         }
     });
     
@@ -48,7 +48,7 @@ const useGameState = () => {
             ...prev,
             isBuilding: true,
             isCollapsing: false,
-            buildStage: 0
+            buildStage: 1  // Start from foundation (stage 1)
         }));
     };
     
@@ -93,7 +93,7 @@ const useGameState = () => {
             setGameState(prev => ({
                 ...prev,
                 isCollapsing: false,
-                buildStage: 0
+                buildStage: 1  // Reset to foundation (stage 1)
             }));
         }, 3000);
     };
@@ -101,7 +101,7 @@ const useGameState = () => {
     const resetBuilding = () => {
         setGameState(prev => ({
             ...prev,
-            buildStage: 0,
+            buildStage: 1,  // Reset to foundation (stage 1)
             isBuilding: false,
             isCollapsing: false
         }));
@@ -138,10 +138,10 @@ const useGameState = () => {
     };
     
     const getNextHouseType = (houseCount) => {
-        if (houseCount >= 50) return 'skyscraper';
-        if (houseCount >= 20) return 'mansion';
-        if (houseCount >= 10) return 'townhouse';
-        return 'cottage';
+        if (houseCount >= 50) return 'castle';
+        if (houseCount >= 20) return 'castle';
+        if (houseCount >= 10) return 'castle';
+        return 'castle';
     };
     
     return {

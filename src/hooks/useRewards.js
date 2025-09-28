@@ -124,7 +124,7 @@ const useRewards = (gameState, timer) => {
         }
         
         // Award streak milestone bonuses
-        const milestones = [3, 7, 14, 30, 100];
+        const milestones = [3, 7, 14, 20, 50];
         const milestone = milestones.find(m => m === newStreak);
         if (milestone) {
             const bonus = milestone * 10;
